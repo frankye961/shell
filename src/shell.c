@@ -11,6 +11,11 @@
 
 #define MAX_ARGS 64
 #define CWD_SIZE 4096
+#define HISTORY_SIZE 1000
+#define HISTORY_COMMAND_LENGTH 1024
+
+static char history_array[HISTORY_SIZE][HISTORY_COMMAND_LENGTH];
+static size_t history_count;
 
 static const char *get_current_user(void)
 {
@@ -24,6 +29,22 @@ static void print_prompt(const char *user)
     const char *directory = getcwd(cwd, sizeof(cwd)) != NULL ? cwd : "?";
     printf("%s$%s> ", user, directory);
     fflush(stdout);
+}
+
+static void history_add(const char *command)
+{
+    if (strspn(command, " \t\r\n") == strlen(command)) {
+        return;
+    }
+
+    size_t index = history_count % HISTORY_SIZE;
+    size_t length = strcspn(command, "\r\n");
+    if (length >= HISTORY_COMMAND_LENGTH) {
+        length = HISTORY_COMMAND_LENGTH - 1;
+    }
+    memcpy(history_array[index], command, length);
+    history_array[index][length] = '\0';
+    history_count++;
 }
 
 static int parse_command(char *line, char *args[MAX_ARGS])
@@ -44,24 +65,6 @@ static int parse_command(char *line, char *args[MAX_ARGS])
     return count;
 }
 
-static int change_directory(char *args[MAX_ARGS])
-{
-    if (args[2] != NULL) {
-        fprintf(stderr, "cd: too many arguments\n");
-        return 1;
-    }
-
-    const char *path = args[1] != NULL ? args[1] : getenv("HOME");
-    if (path == NULL) {
-        fprintf(stderr, "cd: HOME is not set\n");
-        return 1;
-    }
-    if (chdir(path) == -1) {
-        perror("cd");
-        return 1;
-    }
-    return 0;
-}
 
 static int execute_command(char *args[MAX_ARGS])
 {
@@ -92,6 +95,14 @@ static int execute_command(char *args[MAX_ARGS])
     return 1;
 }
 
+static void history(void)
+{
+    size_t first = history_count > HISTORY_SIZE ? history_count - HISTORY_SIZE : 0;
+    for (size_t i = first; i < history_count; i++) {
+        printf("%zu: %s\n", i + 1, history_array[i % HISTORY_SIZE]);
+    }
+}
+
 int shell_run(void)
 {
     const char *user = get_current_user();
@@ -110,6 +121,7 @@ int shell_run(void)
             break;
         }
 
+        history_add(line);
         int count = parse_command(line, args);
         if (count == -1) {
             fprintf(stderr, "shell: too many arguments (maximum %d)\n", MAX_ARGS - 1);
@@ -118,8 +130,8 @@ int shell_run(void)
             continue;
         } else if (strcmp(args[0], "exit") == 0) {
             break;
-        } else if (strcmp(args[0], "cd") == 0) {
-            status = change_directory(args);
+        } else if (strcmp(args[0], "history") == 0) {
+            history();
         } else {
             status = execute_command(args);
         }
