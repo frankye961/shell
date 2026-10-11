@@ -16,3 +16,7 @@ make
 ```
 
 Use `make clean` to remove the executable.
+
+`src/main.c` is the only entry point. `src/shell.c` runs the command loop;
+the other source files handle the prompt, history, parsing, built-ins, and
+external commands. Shared declarations are in `include/shell.h`.

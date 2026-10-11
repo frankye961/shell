@@ -1,17 +1,15 @@
 CC ?= cc
+CPPFLAGS ?= -D_POSIX_C_SOURCE=200809L -Iinclude
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic
 TARGET := shell
-SOURCES := src/main.c
+SOURCES := src/main.c src/shell.c src/prompt.c src/history.c src/parser.c src/builtins.c src/execute.c
 
 .PHONY: all clean
 
-all: $(TARGET) src/shell
+all: $(TARGET)
 
-$(TARGET): $(SOURCES) src/shell.c
-	$(CC) $(CFLAGS) $(SOURCES) -o $@
-
-src/shell: $(TARGET)
-	cp $(TARGET) $@
+$(TARGET): $(SOURCES) include/shell.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) -o $@
 
 clean:
 	rm -f $(TARGET) src/shell
