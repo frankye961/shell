@@ -4,6 +4,7 @@ A small interactive shell that runs commands found through `PATH`. It accepts
 arguments separated by spaces or tabs, waits for each command to finish, and
 shows the current directory in the prompt. The built-in commands are `cd`
 (with no argument, it uses `HOME`) and `exit`. Ctrl-D also exits.
+Ctrl-C interrupts a running command and returns to the prompt.
 
 Input is split on whitespace. Quoting, pipes, redirection, and background jobs
 are not supported.

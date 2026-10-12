@@ -10,5 +10,7 @@ void history_print(void);
 int parse_command(char *line, char *args[MAX_ARGS]);
 int change_directory(char *args[MAX_ARGS], int count);
 int execute_command(char *args[MAX_ARGS]);
+int install_shell_sigint_handler(void);
+int restore_child_sigint(void);
 
 #endif

@@ -1,6 +1,7 @@
 #include "shell.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -14,6 +15,10 @@ int execute_command(char *args[MAX_ARGS])
         return 1;
     }
     if (pid == 0) {
+        if (restore_child_sigint() == -1) {
+            perror("sigaction");
+            _exit(1);
+        }
         execvp(args[0], args);
         perror(args[0]);
         _exit(127);
@@ -30,6 +35,9 @@ int execute_command(char *args[MAX_ARGS])
         return WEXITSTATUS(status);
     }
     if (WIFSIGNALED(status)) {
+        if (WTERMSIG(status) == SIGINT) {
+            putchar('\n');
+        }
         return 128 + WTERMSIG(status);
     }
     return 1;
