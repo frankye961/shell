@@ -1,11 +1,17 @@
 #include "shell.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 int shell_run(void)
 {
+    if (install_shell_sigint_handler() == -1) {
+        perror("sigaction");
+        return 1;
+    }
+
     char *line = NULL;
     size_t capacity = 0;
     int status = 0;
@@ -15,6 +21,12 @@ int shell_run(void)
         print_prompt();
         if (getline(&line, &capacity, stdin) == -1) {
             if (ferror(stdin)) {
+                if (errno == EINTR) {
+                    clearerr(stdin);
+                    putchar('\n');
+                    status = 130;
+                    continue;
+                }
                 perror("getline");
                 status = 1;
             }
